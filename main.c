@@ -6,28 +6,34 @@
 #define MAX_AERONAVES (pow(10,7))
 #define MAX_POS (pow(10,9))
 
+
 typedef struct{
     int x;
     int y;
     int ordemAdicionado;
 } Aviao;
 
+
 typedef Aviao* Avioes;
 
-typedef struct{
-    Aviao* aviao1;
-    Aviao* aviao2;
-    struct paresList* next;
-
-}paresList;
 
 typedef struct{
+    Avioes aviao1;
+    Avioes aviao2;
+    struct par* next;
+} par;
+
+
+typedef par* pares;
+
+
+typedef struct{
+    /* Distancias entre pares de coordenadas */
     long int menorDist;
-    short int hasMenorDist;
-    paresList* paresFirst;
-    paresList* paresLast;
-
-}distPares;
+    short int hasMenorDist; // 0 = false, 1 = true
+    pares paresFirst;
+    pares paresLast;
+} dists;
 
 
 typedef struct {
@@ -35,70 +41,75 @@ typedef struct {
     int endList;
     int sizeList;
     Avioes* array;
-    distPares* distParesMestre;
+    dists* distsMestre;
 } mestre;
 
 
-void initializeNonCheckedDistPares(mestre* mestreNaoVerificado){
-    mestreNaoVerificado->distParesMestre = malloc(sizeof(distPares));
-    mestreNaoVerificado->distParesMestre->hasMenorDist = 0;
-    mestreNaoVerificado->distParesMestre->hasMenorDist = 0;
-    mestreNaoVerificado->distParesMestre->paresFirst = NULL;
-    mestreNaoVerificado->distParesMestre->paresLast = NULL;
-    
+void initializeUncheckedDists(mestre* mestreUnchecked){
+    mestreUnchecked->distsMestre = malloc(sizeof(dists));
+    mestreUnchecked->distsMestre->menorDist = 0;
+    mestreUnchecked->distsMestre->hasMenorDist = 0;
+    mestreUnchecked->distsMestre->paresFirst = NULL;
+    mestreUnchecked->distsMestre->paresLast = NULL;
 }
+
 
 void firstHalf(mestre* originalMestre, mestre* firstHalfMestre){
     firstHalfMestre->array = originalMestre->array;
     firstHalfMestre->startList = originalMestre->startList;
     firstHalfMestre->endList = originalMestre->endList / 2;
     firstHalfMestre->sizeList = firstHalfMestre->endList - firstHalfMestre->startList + 1;
-    initializeNonCheckedDistPares(firstHalfMestre);
+    initializeUncheckedDists(firstHalfMestre);
     return;
 }
+
 
 void secondHalf(mestre* originalMestre, mestre* secondHalfMestre){
     secondHalfMestre->array = originalMestre->array;
     secondHalfMestre->startList = originalMestre->endList/2 + 1;
     secondHalfMestre->endList = originalMestre->endList;
     secondHalfMestre->sizeList = secondHalfMestre->endList - secondHalfMestre->startList + 1;
-    initializeNonCheckedDistPares(secondHalfMestre);
+    initializeUncheckedDists(secondHalfMestre);
     return;
 }
 
-void concedeListPontos(mestre* passivo, mestre* ativo){
-    passivo ->distParesMestre ->hasMenorDist = 1;
-    passivo ->distParesMestre ->menorDist = ativo->distParesMestre->menorDist;
-    passivo ->distParesMestre ->paresFirst = ativo->distParesMestre->paresFirst;
-    passivo->distParesMestre -> paresLast = ativo->distParesMestre->paresLast;
+
+void concedeListPts(mestre* passivo, mestre* ativo){
+    passivo->distsMestre->hasMenorDist = 1;
+    passivo->distsMestre->menorDist = ativo->distsMestre->menorDist;
+    passivo->distsMestre->paresFirst = ativo->distsMestre->paresFirst;
+    passivo->distsMestre-> paresLast = ativo->distsMestre->paresLast;
     return;
 }
 
-void mergeConcedeListPontos(mestre* passivo, mestre* ativo1, mestre* ativo2){
-    concedeListPontos(passivo, ativo1);
-    paresList* tmp = ativo2->distParesMestre->paresLast;
-    passivo->distParesMestre->paresLast = ativo2->distParesMestre->paresFirst;
-    passivo->distParesMestre->paresLast = tmp;
+
+void mergeConcedeListPts(mestre* passivo, mestre* ativo1, mestre* ativo2){
+    concedeListPts(passivo, ativo1);
+    pares tmp = ativo2->distsMestre->paresLast;
+    passivo->distsMestre->paresLast = ativo2->distsMestre->paresFirst;
+    passivo->distsMestre->paresLast = tmp;
 }
+
 
 void compareTemDistMestre(mestre* mestreOriginal, mestre* mestreFirst, mestre* mestreSecond){
-    if(mestreFirst->distParesMestre->hasMenorDist && mestreSecond->distParesMestre->hasMenorDist){
-        if(mestreFirst->distParesMestre->menorDist != mestreSecond->distParesMestre->menorDist){
-            mestre* mestreMenorDist = mestreFirst->distParesMestre->menorDist < mestreSecond->distParesMestre->menorDist ? mestreFirst : mestreSecond;
-            concedeListPontos(mestreOriginal, mestreMenorDist);
+    if(mestreFirst->distsMestre->hasMenorDist && mestreSecond->distsMestre->hasMenorDist){
+        if(mestreFirst->distsMestre->menorDist != mestreSecond->distsMestre->menorDist){
+            mestre* mestreMenorDist = mestreFirst->distsMestre->menorDist < mestreSecond->distsMestre->menorDist ? mestreFirst : mestreSecond;
+            concedeListPts(mestreOriginal, mestreMenorDist);
         }
-        if(mestreFirst->distParesMestre->menorDist == mestreSecond->distParesMestre->menorDist){
-            mergeConcedeListPontos(mestreOriginal, mestreFirst, mestreSecond);
+        if(mestreFirst->distsMestre->menorDist == mestreSecond->distsMestre->menorDist){
+            mergeConcedeListPts(mestreOriginal, mestreFirst, mestreSecond);
         }
     }
-    else if(mestreFirst->distParesMestre->hasMenorDist){
-        concedeListPontos(mestreOriginal, mestreFirst);
+    else if(mestreFirst->distsMestre->hasMenorDist){
+        concedeListPts(mestreOriginal, mestreFirst);
     }
-    else if(mestreSecond->distParesMestre->hasMenorDist){
-        concedeListPontos(mestreOriginal, mestreSecond);
+    else if(mestreSecond->distsMestre->hasMenorDist){
+        concedeListPts(mestreOriginal, mestreSecond);
     }
     return;
 }
+
 
 void distCalcFinder(mestre* mestreOriginal, mestre* mestreFirst, mestre* mestreSecond){
     compareTemDistMestre(mestreOriginal, mestreFirst, mestreSecond);
@@ -108,14 +119,14 @@ void distCalcFinder(mestre* mestreOriginal, mestre* mestreFirst, mestre* mestreS
         }
     }
 
-
     mestreFirst = NULL;
     mestreSecond = NULL;
     return;
 }
 
+
 void distFinderCount(mestre* mestreOriginal){
-    if(mestreOriginal->sizeList <= 1){ //Basicamente garantindo flags que agiliza a verificacao do estado do distPares
+    if(mestreOriginal->sizeList<=1){ //Basicamente garantindo flags que agiliza a verificacao do estado do distpares
         return;
     }
     else{
@@ -126,13 +137,9 @@ void distFinderCount(mestre* mestreOriginal){
         distCalcFinder(mestreOriginal, mestre1, mestre2);
 
         return;
-
     }
-
-
-
-
 }
+
 
 void firstDistFinderCount(mestre* primeiroMestre, Avioes* ptrAvioesArray, int* ptrNAvioes){
     primeiroMestre = malloc(sizeof(mestre));
@@ -140,10 +147,9 @@ void firstDistFinderCount(mestre* primeiroMestre, Avioes* ptrAvioesArray, int* p
     primeiroMestre->endList = *ptrNAvioes - 1;
     primeiroMestre->startList = 0;
     primeiroMestre->sizeList = *ptrAvioesArray + 1;
-    initializeNonCheckedDistPares(primeiroMestre);
+    initializeUncheckedDists(primeiroMestre);
     distFinderCount(primeiroMestre);
     return;
-
 }
 
 
@@ -162,10 +168,8 @@ void encerrarPrograma(int* ptrNAvioes, Avioes* ptrArrayAvioes){
     }
     free(ptrArrayAvioes);
     ptrArrayAvioes = NULL;
-    printf("Programa encerrado com exito!\n");
+    printf("Programa encerrado com êxito!\n");
     return;
-
-
 }
 
 
@@ -178,7 +182,7 @@ int adicionarAvioes(int* ptrPosicao, Avioes* ptrArrayAvioes){
     }
     Aviao* tmp = malloc(sizeof(Aviao));
     if(tmp == NULL){
-        printf("Falha na criacao do Aviao %d.\n", *ptrPosicao);
+        printf("Falha na criação do Avião %d.\n", *ptrPosicao);
         return 1;
     }
     tmp->x = x_cord;
@@ -188,57 +192,38 @@ int adicionarAvioes(int* ptrPosicao, Avioes* ptrArrayAvioes){
     return 0;
 }
 
-int main(int argc){
-    int NAvioesRegistrar;
-    scanf(" %d", &NAvioesRegistrar);
 
-    if(NAvioesRegistrar < 0 || NAvioesRegistrar > MAX_AERONAVES){
-        printf("Numero de Avioes nao valido\n");
+int main(int argc){
+    int n;
+    scanf("%d", &n);
+
+    if(n<=0 || n>MAX_AERONAVES){
+        printf("Numero de aviões inválido.\n"); // Assumimos n=0 inválido pois 0<=i<n
         return -1;
     }
-    
-    printf("Numero de avioes Validos\n");
 
-    if(NAvioesRegistrar){
-        Avioes* arrayAvioes = malloc(NAvioesRegistrar * sizeof(Aviao*));
+    Avioes* arrayAvioes = malloc(n * sizeof(Aviao*));
 
-        if(arrayAvioes == NULL){
-            printf("Falha em alocacao de memoria de arrayAvioes\n");
+    if(arrayAvioes == NULL){
+        printf("Falha em alocacao de memoria de arrayAvioes\n");
+        return 1;
+    }
+
+    for(int i = 0; i < n; i++){
+        if(adicionarAvioes(&i, arrayAvioes)){
+            printf("Saindo do loop.\nEncerrando código.\n");
             return 1;
         }
-
-        for(int i = 0; i < NAvioesRegistrar; i++){
-            if(adicionarAvioes(&i, arrayAvioes)){
-                printf("Saindo do ForLoop.\nEncerrando Codigo\n");
-                return 1;
-            }
-        }
-        
-        printf("\nAvioes criados e alocados com sucesso\n");
-
-        if(argc >2){
-            printAvioes(&NAvioesRegistrar, arrayAvioes);
-        }
-
-
-
-
-
-
-
-        printf("-------\nEncerrando o programa...\n-------\n");
-
-        encerrarPrograma(&NAvioesRegistrar, arrayAvioes);
-
-
-
-        
     }
-    else{
-        printf("Nada a fazer, encerrando o codigo com sucesso!\n");
+    
+    printf("\nAviões criados e alocados com sucesso.\n");
+
+    if(argc >2){
+        printAvioes(&n, arrayAvioes);
     }
+
+    printf("-------\nEncerrando o programa...\n-------\n");
+    encerrarPrograma(&n, arrayAvioes);
 
     return 0;
-
-
 }
