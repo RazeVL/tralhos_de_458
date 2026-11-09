@@ -25,13 +25,14 @@ void printList(list* lista){
 }
 
 // Coloca um número no array no formato da lista
-void addNumArr(list* arrayPos, int value){
+list* addNumArr(list* arrayPos, int value){
+    list* tmp = NULL;
     if (value == 0) {
-        list* tmp = malloc(sizeof(tmp));
+        tmp = malloc(sizeof(list));
         tmp->value = 0;
         tmp->next = NULL;
         arrayPos->next = tmp;
-        return;
+        return tmp;
     }
     while(value>0){
         list* tmp = malloc(sizeof(list));
