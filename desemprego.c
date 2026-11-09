@@ -6,7 +6,7 @@
 // Lista ligada
 typedef struct listyay {
     short int value;
-    struct listyay * next;
+    struct listyay* next;
 } list;
 
 // Troca dois elementos
@@ -17,20 +17,22 @@ void swap(list* primeiro, list* segundo){
     return;
 }
 
-// Imprime os valores de uma lista ligada (a lista começa pelas unidades)
+// Imprime os valores de uma lista ligada
 void printList(list* lista){
-    int num = 0;
-    list* tmp = lista;
-    while(tmp){
-        num *= 10;
-        num += tmp->value;
-        tmp = tmp->next;
-    }
-    printf("%d", num);
+    if (!lista) return;
+    printList(lista->next);
+    printf("%d", lista->value);
 }
 
 // Coloca um número no array no formato da lista
 void addNumArr(list* arrayPos, int value){
+    if (value == 0) {
+        list* tmp = malloc(sizeof(tmp));
+        tmp->value = 0;
+        tmp->next = NULL;
+        arrayPos->next = tmp;
+        return;
+    }
     while(value>0){
         list* tmp = malloc(sizeof(list));
         tmp->value = value%10;
@@ -38,7 +40,7 @@ void addNumArr(list* arrayPos, int value){
         arrayPos->next = tmp;
         value/=10;
     }
-    *arrayPos = *(arrayPos->next);
+    //*arrayPos = *(arrayPos->next);
 }
 
 // Adiciona cartas do input à lista
@@ -55,9 +57,6 @@ void getCartasValue(list** array, int* cartas){
 void innit(list** array, int* cartas){
     scanf("%d", cartas);
     *array = malloc(*cartas * sizeof(list));
-    if(array == NULL){
-        printf("Erro inicializando o array.\n");
-    }
     getCartasValue(array, cartas);
     return;
 }
@@ -72,16 +71,16 @@ void printCarta(list** array, int* cartas){
 
 // Retorna 0 se a > b, retorna 1 se b > a
 int compare(list* a, list* b){
-    if(a->value > b->value) {return 0;}
-    if(a->value < b->value) {return 1;} 
+    if(a->value > b->value) return 0;
+    if(a->value < b->value) return 1; 
     if(a->value == b->value){
-        if(a->next == NULL && b->next == NULL) {return 0;}
+        if(a->next == NULL && b->next == NULL) return 0;
         if(a->next == NULL){
-            if(b->next->value == 0) {return 0;}
-            else {return 1;}
+            if(b->next->value == 0) return 0;
+            else return 1;
         }
         if(b->next == NULL){
-            if(a->next->value == 0) {return 1;}
+            if(a->next->value == 0) return 1;
             else return 0;
         }
         return compare(a->next, b->next);
@@ -89,15 +88,13 @@ int compare(list* a, list* b){
 }
 
 // Função auxiliar do mergeSort
-list* merge(list* a, list* b) {
+void merge(list* a, list* b) {
     list* tmp = malloc(sizeof(list));
-    int i = 1, j = 1;
     while (a->next != NULL && b->next != NULL) {
         if (compare(&a, &b) == 1) {
             tmp->value = a->value;
             a = a->next;
-        }
-        else {
+        } else {
             tmp->value = b->value;
             b = b->next;
         }
@@ -129,7 +126,7 @@ list* mergeSort(list* original) {
         }
         mergeSort(&tmp1);
         mergeSort(&tmp2);
-        original = merge(&tmp1, &tmp2);
+        merge(&tmp1, &tmp2);
     }
     return original;
 }
