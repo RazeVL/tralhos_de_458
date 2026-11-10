@@ -3,144 +3,96 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+typedef long long ll;
+
 // Lista ligada
 typedef struct listyay {
     short int value;
     struct listyay* next;
 } list;
 
-// Troca dois elementos
-void swap(list* primeiro, list* segundo){
-    list tmp = *primeiro;
-    *primeiro = *(segundo);
-    *segundo = tmp;
-    return;
+// Transforma lista em long long pra comparar
+ll listToLL(list* l){
+    ll value = 0;
+    for (;l; l = l->next) value = value * 10 + l->value;
+    return value;
 }
+
+// Retorna o tamanho de uma lista
+int lenList(list* l){ int c = 0; for (;l; l = l->next) c++; return c; }
 
 // Imprime os valores de uma lista ligada
-void printList(list* lista){
-    if (!lista) return;
-    printList(lista->next);
-    printf("%d", lista->value);
-}
+void printList(list* l){ for (;l; l = l->next) printf("%d", l->value); }
 
 // Coloca um número no array no formato da lista
-list* addNumArr(list* arrayPos, int value){
+list* addNumArr(int value){
     list* tmp = NULL;
     if (value == 0) {
         tmp = malloc(sizeof(list));
         tmp->value = 0;
         tmp->next = NULL;
-        arrayPos->next = tmp;
-        return tmp;
     }
     while(value>0){
-        list* tmp = malloc(sizeof(list));
-        tmp->value = value%10;
-        tmp->next = arrayPos->next;
-        arrayPos->next = tmp;
+        list* tung = malloc(sizeof(list));
+        tung->value = value%10;
+        tung->next = tmp;
+        tmp = tung;
         value/=10;
     }
-    //*arrayPos = *(arrayPos->next);
+    return tmp;
 }
 
 // Adiciona cartas do input à lista
-void getCartasValue(list** array, int* cartas){
+void getCartasValue(list*** array, int* cartas){
     int tmp = 0;
     for(int i = 0; i < *cartas; i++){
         scanf("%d",&tmp);
-        addNumArr(&(*array)[i], tmp);
-        //printf("Numero %d adicionado com sucesso\n", tmp); // para testes
+        (*array)[i] = addNumArr(tmp);
     }
 }
 
 // Recebe o número de cartas (input: linha 1) e aloca elas (input: linha 2)
-void innit(list** array, int* cartas){
+void innit(list*** array, int* cartas){
     scanf("%d", cartas);
-    *array = malloc(*cartas * sizeof(list));
+    *array = malloc(*cartas * sizeof(list*));
     getCartasValue(array, cartas);
     return;
 }
 
 // Imprime as cartas na ordem correta
-void printCarta(list** array, int* cartas){
+void printCarta(list*** array, int* cartas){
     for(int i = 0; i< *cartas; i++){
-        printList(&(*array)[i]);
+        printList((*array)[i]);
     }
     printf("\n");
 }
 
-// Retorna 0 se a > b, retorna 1 se b > a
+// Retorna 0 se a tem preferencia sobre b, 1 caso contrario
 int compare(list* a, list* b){
-    if(a->value > b->value) return 0;
-    if(a->value < b->value) return 1; 
-    if(a->value == b->value){
-        if(a->next == NULL && b->next == NULL) return 0;
-        if(a->next == NULL){
-            if(b->next->value == 0) return 0;
-            else return 1;
-        }
-        if(b->next == NULL){
-            if(a->next->value == 0) return 1;
-            else return 0;
-        }
-        return compare(a->next, b->next);
-    }
+    ll aLL = listToLL(a), bLL = listToLL(b);
+    int tamA = lenList(a), tamB = lenList(b);
+    ll potenciaA = 1, potenciaB = 1;
+    for (int i = 0; i < tamB; i++) potenciaA *= 10;
+    for (int i = 0; i < tamA; i++) potenciaB *= 10;
+    ll acomp = aLL * potenciaA + bLL, bcomp = bLL * potenciaB + aLL;
+    if (acomp > bcomp) return 1;
+    if (bcomp > acomp) return -1;
+    return 0;
 }
 
-// Função auxiliar do mergeSort
-void merge(list* a, list* b) {
-    list* tmp = malloc(sizeof(list));
-    while (a->next != NULL && b->next != NULL) {
-        if (compare(&a, &b) == 1) {
-            tmp->value = a->value;
-            a = a->next;
-        } else {
-            tmp->value = b->value;
-            b = b->next;
-        }
-    }
-}
-
-
-list* mergeSort(list* original) {
-    if (original->next->next != NULL) {
-        list* tmp1 = malloc(sizeof(list));
-        list* tmp2 = malloc(sizeof(list));
-        int counter = 0;
-        while (original->next != NULL) {
-            original = original->next;
-            counter++;
-        }
-        counter /= 2;
-        while (original->next != NULL) {
-            if (counter >= 0) {
-                tmp1->value = original->value;
-                tmp1->next = original->next;
-            }
-            else {
-                tmp2->value = original->value;
-                tmp2->next = original->next;
-            }
-            original = original->next;
-            counter--;
-        }
-        mergeSort(&tmp1);
-        mergeSort(&tmp2);
-        merge(&tmp1, &tmp2);
-    }
-    return original;
+// Compara usando o QSort nativo
+int cmpQ(const void* pa, const void* pb){
+    list* a = *(list* const*)pa;
+    list* b = *(list* const*)pb;
+    return -1 * compare(a, b);
 }
 
 // Função principal do programa
 int main(){
     int nCartas;
-    list* arrayCartas = NULL;
+    list** arrayCartas = NULL;
     innit(&arrayCartas, &nCartas);
-    if(compare(&(arrayCartas)[0], &(arrayCartas)[1])){
-        swap(&(arrayCartas)[0], &(arrayCartas)[1]);
-    }
+    qsort(arrayCartas, nCartas, sizeof(list*), cmpQ);
     printCarta(&arrayCartas, &nCartas);
-
     return 0;
 }
