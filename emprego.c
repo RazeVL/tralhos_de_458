@@ -21,9 +21,30 @@ int main() {
         return 0;
     }
 
-    ll tungparcial[m], tungfinal[m];
+    ll tunganterior[m], tungatual[m];
+    for (int cor1 = 0; cor1 <= m; cor1++) { // testa todas as possibilidades da cor da casa 1
+        
+        for (int j = 1; j <= m; j++) { // deixa o tunganterior inicializado
+            if (j == cor1) tunganterior[j] = c[0][j];
+            else tunganterior[j] = TETO;
+        }
 
-    
+        for (int i = 1; i <= n; i++) {
+            for (int j = 0; j <= m; j++) {
+                ll minp = TETO; // menor parcial
+
+                for (int k = 0; k <= m; k++) if (k != j && tunganterior[k] < minp) minp = tunganterior[k];
+
+                if (minp == TETO) tungatual[j] = minp;
+                else tungatual[j] = minp + c[i][j];
+            }
+
+            for (int j = 0; j <= m; j++) tunganterior[j] = tungatual[j];
+        }
+    }
+
+    if (res == TETO) printf("-1\n");
+    else printf("%lld\n", res);
 
     return 0;
 }
